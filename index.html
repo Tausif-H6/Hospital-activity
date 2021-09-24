@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  	<head>
+    	<title>Display All Patients</title>
+    	<meta charset="utf-8">
+       <link rel="stylesheet" href="CSS/bootstrap.min.css">
+       <link rel="stylesheet" href="CSS/style.css">
+  	</head>
+  	<body>
+      
+      <h2>Covid-19 Patient Admission and Management System</h2>
+      
+      <button type="button" id="addpatient">Add Patient</button><br /><br />
+      <table class="table table-striped table-borders" id="tbl">
+         <thead>
+            <tr>
+               <th>Index</th> 
+               <th>Name</th>  
+               <th>Mobile No</th>
+               <th>Status</th>
+               <th>Date</th>
+               <th>Time</th>
+               <th>View Profile</th>
+               <th>Update Profile</th>
+               <th>Admit to ICU</th>
+               <th>Clinical Death</th>
+               <th>Discharge Patient</th>
+            </tr>   
+         </thead>
+         <tbody>            
+         </tbody>
+      </table> 
+
+   	<script src="js/jquery-3.2.1.min.js"></script>
+		<script>
+			$(function(){
+
+            $.ajax({
+               type: "get", 
+               url: 'api/patients',
+               dataType: "json",
+               success: function(data){
+
+                  index = 0;
+                  for (var x in data) {
+
+                     index++;
+
+                     var status = "";
+                     var statusdatetime = "";
+                     var statusdate = "";
+                     var statustime = "";
+
+                     if (data[x].status == 1) {   
+                        status = "Admission";
+                        statusdatetime = data[x].admissiondate;
+                     }
+                     else if (data[x].status == 2) {
+                        status = "ICU admission";
+                        statusdatetime = data[x].icuadmissiondate;
+                     }
+                     else if (data[x].status == 3) {
+                        status = "Clinical death";
+                        statusdatetime = data[x].clinicaldeathdate;
+                     }
+                     else if (data[x].status == 4) {
+                        status = "Discharge";    
+                        statusdatetime = data[x].dischargedate;
+                     }
+
+                     statusdate = statusdatetime.slice(0, 10);
+                     statustime = statusdatetime.slice(12, 19);
+
+                     $("#tbl tbody").append("<tr>" +
+                                            "   <td>" + index + "</td>" +
+                                            "   <td>" + data[x].name + "</td>" +
+                                            "   <td>" + data[x].mobileno + "</td>" +
+                                            "   <td>" + status + "</td>" +
+                                            "   <td>" + statusdate + "</td>" +
+                                            "   <td>" + statustime + "</td>" +
+                                            "   <td>" + "<a href='display.html?id=" + data[x].id + "'>View Patient</a>" + "</td>" +
+                                            "   <td>" + "<a href='update.html?id=" + data[x].id + "'>Update Patient</a>" + "</td>" +
+                                            "   <td>" + "<button type='button' data-id='" + data[x].id + "' data-status='2'>Set ICU</button>" + "</td>" +
+                                            "   <td>" + "<button type='button' data-id='" + data[x].id + "' data-status='3'>Set Clinical Death</button>" + "</td>" +
+                                            "   <td>" + "<button type='button' data-id='" + data[x].id + "' data-status='4'>Set Discharge</button>" + "</td>" +
+                                            "</tr>");
+                  }
+               },
+               error: function() {
+                  console.log("error");
+               }
+            });
+
+            $("#addpatient").click(function(){
+               window.location.href = "insert.html";              
+            });     
+
+            $("#tbl").on("click", "button", function() { 
+               var id = this.getAttribute("data-id"); 
+               var status = this.getAttribute("data-status");  
+               console.log(id + " | " + status);   
+
+               var obj = new Object();
+               obj.status = status;
+
+               var result = confirm("Are you sure you want to change the status!");
+
+               if (result) {
+                  //PUT patients/status/{id}
+                  $.ajax({
+                     type: "put",      
+                     url: 'api/patients/status/' + id,
+                     contentType: 'application/json',
+                     data: JSON.stringify(obj),            
+                     dataType: "json",
+                     success: function(data){
+                        window.location.reload();
+                     },
+                     error: function() {
+                        console.log("error");
+                     }
+                  });
+               }
+            });    
+			});
+		</script>   	
+  	</body>
+     <script src="js/bootstrap.min.js"></script>
+</html>
